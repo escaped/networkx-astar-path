@@ -1,0 +1,19 @@
+{
+    "template": "https://github.com/escaped/cookiecutter-pypackage.git",
+    "commit": "5d29faec3ebe73f53387ccff10ecdae8af67d17a",
+    "context": {
+        "cookiecutter": {
+            "author": "Alexander Frenzel",
+            "author_email": "alex@relatedworks.com",
+            "github_username": "escaped",
+            "project_name": "networkx-astar-path",
+            "project_slug": "networkx_astar_path",
+            "short_description": "Alternative A* implementation, which provides the current and previous edge to the weight function.",
+            "version": "1.0.0",
+            "line_length": "88",
+            "uses_django": "n",
+            "_template": "https://github.com/escaped/cookiecutter-pypackage.git"
+        }
+    },
+    "directory": null
+}
