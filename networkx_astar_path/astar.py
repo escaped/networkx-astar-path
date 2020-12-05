@@ -2,15 +2,67 @@
 Shortest paths and path lengths using the A* ("A star") algorithm.
 """
 from heapq import heappop, heappush
-from itertools import count
+from itertools import chain, count
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import networkx as nx
-from networkx.algorithms.shortest_paths.weighted import _weight_function
 
 __all__ = ["astar_path", "astar_path_length"]
 
 
-def astar_path(G, source, target, heuristic=None, weight="weight"):  # noqa: C901
+Node = Any
+Edge = Tuple[Node, Node]
+WeightFunction = Callable[[nx.Graph, Optional[Edge], Edge], float]
+HeuristicFunction = Callable[[Node, Node], float]
+
+
+def _weight_function(G: nx.Graph, weight: Union[str, WeightFunction]) -> WeightFunction:
+    """Returns a function that returns the weight of an edge.
+    The returned function is specifically suitable for input to
+    functions :func:`_dijkstra` and :func:`_bellman_ford_relaxation`.
+    Parameters
+    ----------
+    G : NetworkX graph.
+    weight : string or function
+        If it is callable, `weight` itself is returned. If it is a string,
+        it is assumed to be the name of the edge attribute that represents
+        the weight of an edge. In that case, a function is returned that
+        gets the edge weight according to the specified edge attribute.
+    Returns
+    -------
+    function
+        This function returns a callable that accepts exactly three inputs:
+        a node, an node adjacent to the first one, and the edge attribute
+        dictionary for the eedge joining those nodes. That function returns
+        a number representing the weight of an edge.
+    If `G` is a multigraph, and `weight` is not callable, the
+    minimum edge weight over all parallel edges is returned. If any edge
+    does not have an attribute with key `weight`, it is assumed to
+    have weight one.
+    """
+    if callable(weight):
+        return weight
+
+    if G.is_multigraph():
+        raise NotImplementedError(
+            "Automatic generation of a weight function for a MultiDiGraph is currently not supported."
+        )
+
+    weight_name = weight
+    return lambda _G, prev_edge, cur_edge: _G.get_edge_data(*cur_edge)[weight_name]
+
+
+def _default_heuristic(u: Node, v: Node) -> float:
+    return 0
+
+
+def astar_path(  # noqa: C901
+    G: nx.Graph,
+    source: Node,
+    target: Node,
+    heuristic: Optional[HeuristicFunction] = None,
+    weight: Union[str, WeightFunction] = "weight",
+) -> Sequence[Node]:
     """Returns a list of nodes in a shortest path between source and target
     using the A* ("A-star") algorithm.
 
@@ -39,9 +91,8 @@ def astar_path(G, source, target, heuristic=None, weight="weight"):  # noqa: C90
        be one.
        If this is a function, the weight of an edge is the value
        returned by the function. The function must accept exactly three
-       positional arguments: the two endpoints of an edge and the
-       dictionary of edge attributes for that edge. The function must
-       return a number.
+       positional arguments: the graph itself and tuples of the previous and
+       the current edge. The function must return a number.
 
     Raises
     ------
@@ -74,31 +125,32 @@ def astar_path(G, source, target, heuristic=None, weight="weight"):  # noqa: C90
 
     if heuristic is None:
         # The default heuristic is h=0 - same as Dijkstra's algorithm
-        def heuristic(u, v):
-            return 0
+        heuristic = _default_heuristic
 
     push = heappush
     pop = heappop
     weight = _weight_function(G, weight)
 
-    # The queue stores priority, node, cost to reach, and parent.
+    # The queue stores priority, node, cost to reach, the parent and the explored path.
     # Uses Python heapq to keep in priority order.
     # Add a counter to the queue to prevent the underlying heap from
     # attempting to compare the nodes themselves. The hash breaks ties in the
     # priority and is guaranteed unique for all nodes in the graph.
     c = count()
-    queue = [(0, next(c), source, 0, None)]
+    queue: List[Tuple[int, int, Node, float, Node, List[Node]]] = [
+        (0, next(c), source, 0, None, [source])
+    ]
 
     # Maps enqueued nodes to distance of discovered paths and the
     # computed heuristics to target. We avoid computing the heuristics
     # more than once and inserting the node into the queue too many times.
-    enqueued = {}
+    enqueued: Dict[Node, Tuple[float, float]] = {}
     # Maps explored nodes to parent closest to the source.
-    explored = {}
+    explored: Dict[Node, Node] = {}
 
     while queue:
         # Pop the smallest item from queue.
-        _, __, curnode, dist, parent = pop(queue)
+        _, __, curnode, dist, parent, explored_path = pop(queue)
 
         if curnode == target:
             path = [curnode]
@@ -122,7 +174,13 @@ def astar_path(G, source, target, heuristic=None, weight="weight"):  # noqa: C90
         explored[curnode] = parent
 
         for neighbor, w in G[curnode].items():
-            ncost = dist + weight(curnode, neighbor, w)
+            cur_edge = (curnode, neighbor)
+            try:
+                prev_edge: Optional[Edge] = (explored_path[-2], curnode)
+            except IndexError:
+                prev_edge = None
+            ncost = dist + weight(G, prev_edge, cur_edge)
+
             if neighbor in enqueued:
                 qcost, h = enqueued[neighbor]
                 # if qcost <= ncost, a less costly path from the
@@ -134,12 +192,28 @@ def astar_path(G, source, target, heuristic=None, weight="weight"):  # noqa: C90
             else:
                 h = heuristic(neighbor, target)
             enqueued[neighbor] = ncost, h
-            push(queue, (ncost + h, next(c), neighbor, ncost, curnode))
+            push(  # type: ignore
+                queue,
+                (
+                    ncost + h,
+                    next(c),
+                    neighbor,
+                    ncost,
+                    curnode,
+                    explored_path + [neighbor],
+                ),
+            )
 
     raise nx.NetworkXNoPath(f"Node {target} not reachable from {source}")
 
 
-def astar_path_length(G, source, target, heuristic=None, weight="weight"):
+def astar_path_length(
+    G: nx.Graph,
+    source: Node,
+    target: Node,
+    heuristic: Optional[HeuristicFunction] = None,
+    weight: Union[str, WeightFunction] = "weight",
+) -> float:
     """Returns the length of the shortest path between source and target using
     the A* ("A-star") algorithm.
 
@@ -174,4 +248,10 @@ def astar_path_length(G, source, target, heuristic=None, weight="weight"):
 
     weight = _weight_function(G, weight)
     path = astar_path(G, source, target, heuristic, weight)
-    return sum(weight(u, v, G[u][v]) for u, v in zip(path[:-1], path[1:]))
+    # The weight function looks at the current and the previous edge.
+    # Since, when we visit our first edge, we haven't visited any other edge beforehand.
+    # This is indicated by an edge with the value `None`.
+    path_edges = list(chain([None], list(zip(path[:-1], path[1:]))))
+
+    # ignoring type: we manually added a node and that node will only be passed in as u, which is valid
+    return sum(weight(G, u, v) for u, v in zip(path_edges[:-1], path_edges[1:]))  # type: ignore
