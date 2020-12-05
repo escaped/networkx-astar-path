@@ -1,1 +1,1 @@
-from .astar import *  # NOQA
+from .astar import *  # noqa

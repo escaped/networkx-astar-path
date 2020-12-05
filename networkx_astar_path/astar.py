@@ -1,7 +1,7 @@
 """
 Shortest paths and path lengths using the A* ("A star") algorithm.
 """
-from heapq import heappush, heappop
+from heapq import heappop, heappush
 from itertools import count
 
 import networkx as nx
@@ -10,7 +10,7 @@ from networkx.algorithms.shortest_paths.weighted import _weight_function
 __all__ = ["astar_path", "astar_path_length"]
 
 
-def astar_path(G, source, target, heuristic=None, weight="weight"):
+def astar_path(G, source, target, heuristic=None, weight="weight"):  # noqa: C901
     """Returns a list of nodes in a shortest path between source and target
     using the A* ("A-star") algorithm.
 
