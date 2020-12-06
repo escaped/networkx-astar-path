@@ -49,7 +49,7 @@ jobs:
         env:
           PLATFORM: ${{ matrix.platform }}
       - name: coveralls
-        run: coveralls
+        run: coveralls debug
         env:
           COVERALLS_PARALLEL: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,7 +65,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install coveralls
       - name: coveralls
-        run: coveralls --finish
+        run: coveralls debug --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
