@@ -3,8 +3,9 @@ from typing import Optional
 import networkx as nx
 import pytest
 from networkx.algorithms.shortest_paths.astar import astar_path as original_astar_path
-from networkx.algorithms.shortest_paths.astar import \
-    astar_path_length as original_astar_path_length
+from networkx.algorithms.shortest_paths.astar import (
+    astar_path_length as original_astar_path_length,
+)
 
 from networkx_astar_path import astar_path, astar_path_length
 from networkx_astar_path.astar import Edge
