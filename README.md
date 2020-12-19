@@ -11,7 +11,12 @@ Alternative A* implementation, which provides the current and previous edge to t
 ## Requirements
 
 * Python 3.6.1 or newer
-* [poetry](https://poetry.eustance.io/) 1.1 or newer
+
+## Installation
+
+```sh
+pip install networkx-astar-path
+```
 
 ## Usage
 
@@ -40,11 +45,11 @@ Given the following graph
 ```python
 import networks as nx
 
-G = nx.DiGraph()
+graph = nx.DiGraph()
 
-G.add_edges_from([('S', 'A1')], weight=-2)
-G.add_edges_from([('A1', 'T')], weight=7)
-G.add_edges_from([('S','A2'), ('A2','B2'),('B2','C2'),('C2','T')], weight=1)
+graph.add_edges_from([('S', 'A1')], weight=-2)
+graph.add_edges_from([('A1', 'T')], weight=7)
+graph.add_edges_from([('S','A2'), ('A2','B2'),('B2','C2'),('C2','T')], weight=1)
 ```
 
 
@@ -58,7 +63,7 @@ Let's find the shortest path by only looking at the weights of the current edge.
 ```python
 from networkx_astar_path import astar_path
 
-path = astar_path(G, source='S', target='T', weight="weight")
+path = astar_path(graph, source='S', target='T', weight="weight")
 # ['S', 'A2', 'B2', 'C2', 'T']
 ```
 
@@ -80,7 +85,7 @@ def dependent_weight(graph: nx.Graph, prev_edge: Optional[Tuple[Any, Any]], cur_
     cur_weight = graph.get_edge_data(*cur_edge)['weight']
     return cur_weight / prev_weight
 
-path = astar_path(G, source='S', target='T', weight=dependent_weight)
+path = astar_path(graph, source='S', target='T', weight=dependent_weight)
 # ['S', 'A1', 'T']
 ```
 
@@ -121,4 +126,3 @@ cruft update
 ```
 
 in the root of this repository.
-
