@@ -53,6 +53,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel: true
+          debug: true
 
   coveralls_finish:
     needs: [test]
@@ -63,3 +64,4 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
+          debug: true
