@@ -1,6 +1,6 @@
 {
     "template": "https://github.com/escaped/cookiecutter-pypackage.git",
-    "commit": "48050624afcd08ab634f62ecbdad08e6da2ef216",
+    "commit": "6efc447310a6a1b488583c72cc2e5bc621e4c290",
     "context": {
         "cookiecutter": {
             "author": "Alexander Frenzel",
