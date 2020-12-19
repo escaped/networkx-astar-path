@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "networkx-astar-path"
-version = "1.0.0"
+version = "1.0.1"
 description = "Alternative A* implementation, which provides the current and previous edge to the weight function."
 authors = [
     "Alexander Frenzel <alex@relatedworks.com>",

@@ -7,4 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/escaped/networkx-astar-path/tree/master
+## [1.0.1] - 2020-12-18
+
+[Unreleased]: https://github.com/escaped/django-networkx-astar-path/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/escaped/networkx-astar-path/tree/1.0.1
