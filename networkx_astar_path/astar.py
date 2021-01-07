@@ -16,13 +16,15 @@ WeightFunction = Callable[[nx.Graph, Optional[Edge], Edge], float]
 HeuristicFunction = Callable[[Node, Node], float]
 
 
-def _weight_function(G: nx.Graph, weight: Union[str, WeightFunction]) -> WeightFunction:
+def _weight_function(
+    graph: nx.Graph, weight: Union[str, WeightFunction]
+) -> WeightFunction:
     """Returns a function that returns the weight of an edge.
     The returned function is specifically suitable for input to
     functions :func:`_dijkstra` and :func:`_bellman_ford_relaxation`.
     Parameters
     ----------
-    G : NetworkX graph.
+    graph : NetworkX graph.
     weight : string or function
         If it is callable, `weight` itself is returned. If it is a string,
         it is assumed to be the name of the edge attribute that represents
@@ -35,7 +37,7 @@ def _weight_function(G: nx.Graph, weight: Union[str, WeightFunction]) -> WeightF
         a node, an node adjacent to the first one, and the edge attribute
         dictionary for the eedge joining those nodes. That function returns
         a number representing the weight of an edge.
-    If `G` is a multigraph, and `weight` is not callable, the
+    If `graph` is a multigraph, and `weight` is not callable, the
     minimum edge weight over all parallel edges is returned. If any edge
     does not have an attribute with key `weight`, it is assumed to
     have weight one.
@@ -43,7 +45,7 @@ def _weight_function(G: nx.Graph, weight: Union[str, WeightFunction]) -> WeightF
     if callable(weight):
         return weight
 
-    if G.is_multigraph():
+    if graph.is_multigraph():
         raise NotImplementedError(
             "Automatic generation of a weight function for a MultiDiGraph is currently not supported."
         )
@@ -57,7 +59,7 @@ def _default_heuristic(u: Node, v: Node) -> float:
 
 
 def astar_path(  # noqa: C901
-    G: nx.Graph,
+    graph: nx.Graph,
     source: Node,
     target: Node,
     heuristic: Optional[HeuristicFunction] = None,
@@ -70,7 +72,7 @@ def astar_path(  # noqa: C901
 
     Parameters
     ----------
-    G : NetworkX graph
+    graph : NetworkX graph
 
     source : node
        Starting node for path
@@ -86,7 +88,7 @@ def astar_path(  # noqa: C901
     weight : string or function
        If this is a string, then edge weights will be accessed via the
        edge attribute with this key (that is, the weight of the edge
-       joining `u` to `v` will be ``G.edges[u, v][weight]``). If no
+       joining `u` to `v` will be ``graph.edges[u, v][weight]``). If no
        such edge attribute exists, the weight of the edge is assumed to
        be one.
        If this is a function, the weight of an edge is the value
@@ -101,16 +103,16 @@ def astar_path(  # noqa: C901
 
     Examples
     --------
-    >>> G = nx.path_graph(5)
-    >>> print(nx.astar_path(G, 0, 4))
+    >>> graph = nx.path_graph(5)
+    >>> print(nx.astar_path(graph, 0, 4))
     [0, 1, 2, 3, 4]
-    >>> G = nx.grid_graph(dim=[3, 3])  # nodes are two-tuples (x,y)
-    >>> nx.set_edge_attributes(G, {e: e[1][0] * 2 for e in G.edges()}, "cost")
+    >>> graph = nx.grid_graph(dim=[3, 3])  # nodes are two-tuples (x,y)
+    >>> nx.set_edge_attributes(graph, {e: e[1][0] * 2 for e in graph.edges()}, "cost")
     >>> def dist(a, b):
     ...     (x1, y1) = a
     ...     (x2, y2) = b
     ...     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-    >>> print(nx.astar_path(G, (0, 0), (2, 2), heuristic=dist, weight="cost"))
+    >>> print(nx.astar_path(graph, (0, 0), (2, 2), heuristic=dist, weight="cost"))
     [(0, 0), (0, 1), (0, 2), (1, 2), (2, 2)]
 
 
@@ -119,8 +121,8 @@ def astar_path(  # noqa: C901
     shortest_path, dijkstra_path
 
     """
-    if source not in G or target not in G:
-        msg = f"Either source {source} or target {target} is not in G"
+    if source not in graph or target not in graph:
+        msg = f"Either source {source} or target {target} is not in graph"
         raise nx.NodeNotFound(msg)
 
     if heuristic is None:
@@ -129,7 +131,7 @@ def astar_path(  # noqa: C901
 
     push = heappush
     pop = heappop
-    weight = _weight_function(G, weight)
+    weight = _weight_function(graph, weight)
 
     # The queue stores priority, node, cost to reach, the parent and the explored path.
     # Uses Python heapq to keep in priority order.
@@ -173,13 +175,13 @@ def astar_path(  # noqa: C901
 
         explored[curnode] = parent
 
-        for neighbor, w in G[curnode].items():
+        for neighbor, w in graph[curnode].items():
             cur_edge = (curnode, neighbor)
             try:
                 prev_edge: Optional[Edge] = (explored_path[-2], curnode)
             except IndexError:
                 prev_edge = None
-            ncost = dist + weight(G, prev_edge, cur_edge)
+            ncost = dist + weight(graph, prev_edge, cur_edge)
 
             if neighbor in enqueued:
                 qcost, h = enqueued[neighbor]
@@ -208,7 +210,7 @@ def astar_path(  # noqa: C901
 
 
 def astar_path_length(
-    G: nx.Graph,
+    graph: nx.Graph,
     source: Node,
     target: Node,
     heuristic: Optional[HeuristicFunction] = None,
@@ -219,7 +221,7 @@ def astar_path_length(
 
     Parameters
     ----------
-    G : NetworkX graph
+    graph : NetworkX graph
 
     source : node
        Starting node for path
@@ -242,16 +244,16 @@ def astar_path_length(
     astar_path
 
     """
-    if source not in G or target not in G:
-        msg = f"Either source {source} or target {target} is not in G"
+    if source not in graph or target not in graph:
+        msg = f"Either source {source} or target {target} is not in graph"
         raise nx.NodeNotFound(msg)
 
-    weight = _weight_function(G, weight)
-    path = astar_path(G, source, target, heuristic, weight)
+    weight = _weight_function(graph, weight)
+    path = astar_path(graph, source, target, heuristic, weight)
     # The weight function looks at the current and the previous edge.
     # Since, when we visit our first edge, we haven't visited any other edge beforehand.
     # This is indicated by an edge with the value `None`.
     path_edges = list(chain([None], list(zip(path[:-1], path[1:]))))
 
     # ignoring type: we manually added a node and that node will only be passed in as u, which is valid
-    return sum(weight(G, u, v) for u, v in zip(path_edges[:-1], path_edges[1:]))  # type: ignore
+    return sum(weight(graph, u, v) for u, v in zip(path_edges[:-1], path_edges[1:]))  # type: ignore
